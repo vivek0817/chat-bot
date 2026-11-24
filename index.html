@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Chatbot</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    body { background: #f4f6f8; }
+    .header { background: #0d6efd; color: #fff; padding: 14px; text-align: center; }
+    .chat-canvas {
+      height: 70vh; overflow-y: auto; padding: 16px;
+      background: #fff; border: 1px solid #e3e3e3; border-radius: 8px;
+    }
+    .chat-message { max-width: 75%; padding: 10px 14px; border-radius: 12px; margin-bottom: 10px; white-space: pre-wrap; }
+    .chat-message.user { background: #0d6efd; color: #fff; margin-left: auto; }
+    .chat-message.bot  { background: #eceff1; color: #111; margin-right: auto; }
+    .footer { display: flex; gap: 8px; padding: 12px 0; }
+  </style>
+</head>
+<body>
+
+  <div class="header"><h4 class="m-0">AI Chatbot</h4></div>
+
+  <div class="container mt-3">
+    <div class="chat-canvas" id="chat-canvas"></div>
+
+    <div class="footer">
+      <input type="text" id="message-input" class="form-control" placeholder="Type your message">
+      <button id="send-button" class="btn btn-primary">Send</button>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    $(document).ready(function () {
+
+      function scrollDown() {
+        const box = $("#chat-canvas");
+        box.scrollTop(box[0].scrollHeight);   // auto-scroll to newest message
+      }
+
+      function addMessage(text, sender) {
+        $("<div>")
+          .addClass("chat-message")
+          .addClass(sender)
+          .text(text)
+          .appendTo("#chat-canvas");
+      }
+
+      $("#send-button").click(function () {
+
+        const message = $("#message-input").val().trim();
+        if (message === "") return;           // ignore empty input
+
+        addMessage(message, "user");
+        $("#message-input").val("");
+        scrollDown();
+
+        // send it to Flask
+        $.ajax({
+          url: "/chat",
+          type: "POST",
+          contentType: "application/json",
+          data: JSON.stringify({ message: message }),
+
+          success: function (res) {
+            addMessage(res.response, "bot");
+            scrollDown();
+          },
+
+          error: function (xhr) {
+            const errorMessage = xhr.responseJSON && xhr.responseJSON.error
+              ? xhr.responseJSON.error
+              : "Could not reach the chatbot server. Check that Flask is running and try again.";
+            addMessage(errorMessage, "bot");
+            scrollDown();
+          }
+        });
+      });
+
+      // press Enter to send
+      $("#message-input").keypress(function (e) {
+        if (e.which === 13) $("#send-button").click();
+      });
+    });
+  </script>
+</body>
+</html>
