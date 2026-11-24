@@ -11,7 +11,7 @@ app = Flask(__name__)
 # Initialize Groq model
 llm = ChatGroq(
     model="openai/gpt-oss-20b",
-    api_key="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",
+    api_key="apikey ",
     temperature=0.7,
     max_retries=2
 )
